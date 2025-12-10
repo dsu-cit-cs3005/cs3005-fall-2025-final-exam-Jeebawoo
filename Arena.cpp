@@ -148,6 +148,7 @@ void Arena::place_robots() {
         int col = 0;
         index_to_pos(cell, row, col);
         m_robots_list[i]->move_to(row, col);
+        m_robots_list[i]->set_boundaries(m_height, m_width);
     }
 }
 
@@ -183,7 +184,7 @@ void Arena::display_board() {
         for (int cl = 0; cl < m_width; cl++) {
             char cell = m_board[pos_to_index(rw, cl)];
             std::cout << " " << cell;
-            if (cell == 'R') {
+            if (cell == 'R' && m_robots_list[position_to_robot(rw, cl)]->m_character) {
                 std::cout << m_robots_list[position_to_robot(rw, cl)]->m_character;
             } else {
                 std::cout << " ";
@@ -598,22 +599,23 @@ void Arena::handle_shot(WeaponType weapon, int aim_row, int aim_col, int start_r
     switch (weapon) {
         case flamethrower:
             // 30-50 dp, 4 long, 3 wide ray
-
+            // ???
             break;
         case railgun:
             // 10-20 dp, 1 wide piercing ray
-
+            // ???
             break;
         case grenade:
             // 10-40 dp, 3x3 area anywhere
-
+            // ???
             break;
         case hammer:
             // 50-60 dp, one adjecent cell
-
+            // ???
             break;
     }
 
+    std::cout << "\tdid not deal damage" << std::endl << std::endl;
 }
 
 void Arena::do_damage(int low_damage, int high_damage, int robot) {
@@ -727,6 +729,7 @@ void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
     m_robots_list[position_to_robot(start_row, start_col)]->move_to(row, col);
     m_board[pos_to_index(start_row, start_col)] = '.';
     m_board[pos_to_index(row, col)] = 'R';
+    std::cout << "\tmoving to (" << row << "," << col << ")" << std::endl << std::endl;
 }
 
 int Arena::game_loop() {
@@ -748,6 +751,11 @@ int Arena::game_loop() {
 
         // per robot:
         for (size_t i = 0; i < m_robots_list.size(); i++) {
+            std::cout << m_robots_list[i]->m_name << " " << m_robots_list[i]->m_character;
+            int row;
+            int col;
+            m_robots_list[i]->get_current_location(row, col);
+            std::cout << " (" << row << "," << col << ")";
             // check for winner [board func]
             if (is_winner()) {
                 return 0;
@@ -755,17 +763,27 @@ int Arena::game_loop() {
             // check if alive [in loop]
             if (m_robots_list[i]->get_health() <= 0) {
                 // if dead display so and next robot [in loop]
-
+                std::cout << " - is out" << std::endl << std::endl;
                 continue;
             }
+            std::cout << " Health: " << m_robots_list[i]->get_health() << " Armor: " << m_robots_list[i]->get_armor() << std::endl;
             // call get radar dir [robot func]
             int dir;
             m_robots_list[i]->get_radar_direction(dir);
             // scan using direction and robot pos [arena func]
-            int row;
-            int col;
-            m_robots_list[i]->get_current_location(row, col);
             std::vector<RadarObj> radar_results = scan_radar(dir, row, col);
+            std::cout << "\tradar scan returned ";
+            if (!radar_results.size()) {
+                std::cout << "nothing" << std::endl;
+            } else {
+                std::string spacer = "";
+                for (size_t i = 0; i < radar_results.size(); i++) {
+                    std::cout << spacer;
+                    std::cout << radar_results[i].m_type << " at (" << radar_results[i].m_row << "," << radar_results[i].m_col << ")";
+                    spacer = ", and ";
+                }
+                std::cout << std::endl;
+            }
             // call process radar [robot func]
             m_robots_list[i]->process_radar_results(radar_results);
             // call get shot [robot func]
@@ -773,20 +791,20 @@ int Arena::game_loop() {
             int start_col = col;
             if (m_robots_list[i]->get_shot_location(row, col)) {
                 // if true handle shot and damage [arena funcs]
+                std::cout << "\tfiring " << m_robots_list[i]->get_weapon() << " at (" << row << "," << col << ")" << std::endl;
                 handle_shot(m_robots_list[i]->get_weapon(), row, col, start_row, start_col);
             } else {
                 // else call get move direction and handle movement [robot func and board func]
                 int dist;
                 m_robots_list[i]->get_move_direction(dir, dist);
+                std::cout << "\tnot firing" << std::endl;
                 move_robot(start_row, start_col, dir, dist);
             }
-            // log/print results [in loop]
-
         }
 
         // per round:
         // sleep for live replay [in loop]
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         // incriment round [in loop]
         round++;
     }
