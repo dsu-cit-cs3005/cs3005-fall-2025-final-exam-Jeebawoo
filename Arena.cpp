@@ -8,11 +8,11 @@
 #include <random>
 #include <thread>
 #include <chrono>
+#include <cmath>
 
 #include "Arena.h"
 
 Arena::Arena() : m_height(10), m_width(10) {
-    // load_robots();
     m_board.resize(m_height*m_width);
     for (size_t i = 0; i < m_board.size(); i++) {
         m_board[i] = '.';
@@ -20,7 +20,6 @@ Arena::Arena() : m_height(10), m_width(10) {
 }
 
 Arena::Arena(int height, int width) : m_height(height), m_width(width) {
-    // load_robots();
     // load arena config
     m_board.resize(m_height*m_width);
     for (size_t i = 0; i < m_board.size(); i++) {
@@ -603,7 +602,24 @@ void Arena::handle_shot(WeaponType weapon, int aim_row, int aim_col, int start_r
             break;
         case railgun:
             // 10-20 dp, 1 wide piercing ray
-            // ???
+            int del_row = aim_row - start_row;
+            int del_col = aim_col - start_col;
+            int steps = std::max(std::abs(del_row), std::abs(del_col));
+            double row_inc = del_row / double(steps);
+            double col_inc = del_col / double(steps);
+            double row_counter = double(start_row);
+            double col_counter = double(start_col);
+            row_counter += row_inc;
+            col_counter += col_inc;
+            while (pos_in_bounds(row_counter, col_counter))
+            {
+                // if so damage accordingly
+                row_counter += row_inc;
+                col_counter += col_inc;
+                if (m_board[row_counter, col_counter] == 'R') {
+                    do_damage(10, 20, position_to_robot(row_counter, col_counter));
+                }
+            }
             break;
         case grenade:
             // 10-40 dp, 3x3 area anywhere
@@ -611,7 +627,18 @@ void Arena::handle_shot(WeaponType weapon, int aim_row, int aim_col, int start_r
             break;
         case hammer:
             // 50-60 dp, one adjecent cell
-            // ???
+            int del_row = aim_row - start_row;
+            int del_col = aim_col - start_col;
+            int steps = std::max(std::abs(del_row), std::abs(del_col));
+            double row_inc = del_row / double(steps);
+            double col_inc = del_col / double(steps);
+            double row_counter = double(start_row);
+            double col_counter = double(start_col);
+            row_counter += row_inc;
+            col_counter += col_inc;
+            if (pos_in_bounds(row_counter, col_counter) && m_board[row_counter, col_counter] == 'R') {
+                do_damage(50, 60, position_to_robot(row_counter, col_counter));
+            }
             break;
     }
 
@@ -737,7 +764,7 @@ int Arena::game_loop() {
     // load robots
     load_robots();
     // place obstacles
-    place_obstacles(5, 5, 5);   // mounds, pits, flames
+    place_obstacles(5, 1, 9);   // mounds, pits, flames
     // place robots
     place_robots();
     bool cond = true;
