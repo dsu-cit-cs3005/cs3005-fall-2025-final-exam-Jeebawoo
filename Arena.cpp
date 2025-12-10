@@ -167,7 +167,6 @@ int Arena::position_to_robot(int row, int col) {
 }
 
 void Arena::display_board() {
-    std::cout << "\nIn display_board()\n";
     // displayes the formatted board with each cell as a char
     // if an R is encountered uses pos to robot to find its char
     std::cout << std::endl << "   ";
@@ -641,7 +640,6 @@ void Arena::do_damage(int low_damage, int high_damage, int robot) {
 }
 
 void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
-    std::cout << "\nIn move_robot()\n";
     // steps through motion up to speed steps in dir
     // if obstacle encountered handled accordingly
     // updates board
@@ -719,7 +717,7 @@ void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
             break;
         }
         else if (cell == 'F') {
-            do_damage(30, 50, pos_to_index(start_row, start_col));
+            do_damage(30, 50, position_to_robot(start_row, start_col));
         }
     }
     if (m_board[pos_to_index(row, col)] == 'F') {
@@ -738,7 +736,6 @@ int Arena::game_loop() {
     // place obstacles
     place_obstacles(5, 5, 5);   // mounds, pits, flames
     // place robots
-    std::cout << "Size of robots list: " << m_robots_list.size() << std::endl;
     place_robots();
     bool cond = true;
     int round = 1;
