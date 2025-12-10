@@ -18,7 +18,7 @@ public:
     void load_robots();
     int random_index();
     void place_obstacles(int mounds, int pits, int flames);
-    void index_to_pos(int index, int row, int col);
+    void index_to_pos(int index, int& row, int& col);
     void place_robots();
     int position_to_robot(int row, int col);
     void display_board();

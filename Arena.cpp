@@ -33,23 +33,20 @@ Arena::~Arena() {}
 void Arena::load_robots() {
     std::vector<std::string> uncompiled_robots;
 
-    std::regex pattern("Robot_*.cpp");
+    std::regex pattern("Robot_.*.cpp");
 
     DIR *dir;
     struct dirent *ent;
     
     if ((dir = opendir("./")) != nullptr) {
-        std::cout << "dir is: " << dir << "\n";
         while ((ent = readdir(dir)) != nullptr) {
             std::string filename = ent->d_name;
             if (std::regex_match(filename, pattern)) {
-                std::cout << "Pushing back: " << filename << std::endl;
                 uncompiled_robots.push_back(filename);
             }
         }
         closedir(dir);
     } else {
-        std::cout << "Could not open directory";
         perror("Could not open directory");
     }
 
@@ -71,6 +68,7 @@ void Arena::load_robots() {
             continue;
         }
 
+        shared_lib = "./" + shared_lib;
         void* handle = dlopen(shared_lib.c_str(), RTLD_LAZY);
         if (!handle) 
         {
@@ -130,7 +128,7 @@ void Arena::place_obstacles(int mounds, int pits, int flames) {
     }
 }
 
-void Arena::index_to_pos(int index, int row, int col) {
+void Arena::index_to_pos(int index, int& row, int& col) {
     (void) row;
     col = index % m_width;
     row = (index - col) / m_height;
@@ -169,6 +167,7 @@ int Arena::position_to_robot(int row, int col) {
 }
 
 void Arena::display_board() {
+    std::cout << "\nIn display_board()\n";
     // displayes the formatted board with each cell as a char
     // if an R is encountered uses pos to robot to find its char
     std::cout << std::endl << "   ";
@@ -642,6 +641,7 @@ void Arena::do_damage(int low_damage, int high_damage, int robot) {
 }
 
 void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
+    std::cout << "\nIn move_robot()\n";
     // steps through motion up to speed steps in dir
     // if obstacle encountered handled accordingly
     // updates board
@@ -696,7 +696,7 @@ void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
             d_row = 0;
             d_col = 0;
     }
-    int max_speed = m_robots_list[pos_to_index(start_row, start_col)]->get_move_speed();
+    int max_speed = m_robots_list[position_to_robot(start_row, start_col)]->get_move_speed();
     if (speed > max_speed) {
         dist = max_speed;
     }
@@ -715,7 +715,7 @@ void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
             break;
         } 
         else if (cell == 'P') {
-            m_robots_list[pos_to_index(start_row, start_col)]->disable_movement();
+            m_robots_list[position_to_robot(start_row, start_col)]->disable_movement();
             break;
         }
         else if (cell == 'F') {
@@ -726,7 +726,7 @@ void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
         row -= d_row;
         col -= d_col;
     }
-    m_robots_list[pos_to_index(start_row, start_col)]->move_to(row, col);
+    m_robots_list[position_to_robot(start_row, start_col)]->move_to(row, col);
     m_board[pos_to_index(start_row, start_col)] = '.';
     m_board[pos_to_index(row, col)] = 'R';
 }
@@ -734,7 +734,6 @@ void Arena::move_robot(int start_row, int start_col, int dir, int speed) {
 int Arena::game_loop() {
     // on startup
     // load robots
-    std::cout << "Loading robots..." << std::endl;
     load_robots();
     // place obstacles
     place_obstacles(5, 5, 5);   // mounds, pits, flames
@@ -790,7 +789,7 @@ int Arena::game_loop() {
 
         // per round:
         // sleep for live replay [in loop]
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         // incriment round [in loop]
         round++;
     }

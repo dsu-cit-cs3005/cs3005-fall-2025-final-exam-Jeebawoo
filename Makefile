@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic
 all: test_robot RobotWarz
 
 RobotBase.o: RobotBase.cpp RobotBase.h
-	$(CXX) $(CXXFLAGS) -c RobotBase.cpp
+	$(CXX) $(CXXFLAGS) -fPIC -c RobotBase.cpp
 
 test_robot: test_robot.cpp RobotBase.o
 	$(CXX) $(CXXFLAGS) test_robot.cpp RobotBase.o -ldl -o test_robot
