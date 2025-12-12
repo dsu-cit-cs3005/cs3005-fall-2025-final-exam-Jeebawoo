@@ -601,45 +601,63 @@ void Arena::handle_shot(WeaponType weapon, int aim_row, int aim_col, int start_r
             // ???
             break;
         case railgun:
-            // 10-20 dp, 1 wide piercing ray
-            int del_row = aim_row - start_row;
-            int del_col = aim_col - start_col;
-            int steps = std::max(std::abs(del_row), std::abs(del_col));
-            double row_inc = del_row / double(steps);
-            double col_inc = del_col / double(steps);
-            double row_counter = double(start_row);
-            double col_counter = double(start_col);
-            row_counter += row_inc;
-            col_counter += col_inc;
-            while (pos_in_bounds(row_counter, col_counter))
-            {
-                // if so damage accordingly
-                row_counter += row_inc;
-                col_counter += col_inc;
-                if (m_board[row_counter, col_counter] == 'R') {
-                    do_damage(10, 20, position_to_robot(row_counter, col_counter));
-                }
-            }
-            break;
+		{
+			int del_row = aim_row - start_row;
+			int del_col = aim_col - start_col;
+
+			int steps = std::max(std::abs(del_row), std::abs(del_col));
+			if (steps == 0) break;
+
+			double row_inc = del_row / double(steps);
+			double col_inc = del_col / double(steps);
+
+			double row_counter = start_row;
+			double col_counter = start_col;
+
+			row_counter += row_inc;
+			col_counter += col_inc;
+
+			while (true)
+			{
+				int r = static_cast<int>(std::round(row_counter));
+				int c = static_cast<int>(std::round(col_counter));
+
+				if (!pos_in_bounds(r, c)) break;
+
+				if (m_board[pos_to_index(r, c)] == 'R') {
+					do_damage(10, 20, position_to_robot(r, c));
+				}
+
+				row_counter += row_inc;
+				col_counter += col_inc;
+			}
+			break;
+		}
+			break;
         case grenade:
             // 10-40 dp, 3x3 area anywhere
             // ???
             break;
         case hammer:
-            // 50-60 dp, one adjecent cell
-            int del_row = aim_row - start_row;
-            int del_col = aim_col - start_col;
-            int steps = std::max(std::abs(del_row), std::abs(del_col));
-            double row_inc = del_row / double(steps);
-            double col_inc = del_col / double(steps);
-            double row_counter = double(start_row);
-            double col_counter = double(start_col);
-            row_counter += row_inc;
-            col_counter += col_inc;
-            if (pos_in_bounds(row_counter, col_counter) && m_board[row_counter, col_counter] == 'R') {
-                do_damage(50, 60, position_to_robot(row_counter, col_counter));
-            }
-            break;
+		{
+			int del_row = aim_row - start_row;
+			int del_col = aim_col - start_col;
+
+			int steps = std::max(std::abs(del_row), std::abs(del_col));
+			if (steps == 0) break;
+
+			double row_inc = del_row / double(steps);
+			double col_inc = del_col / double(steps);
+
+			int r = static_cast<int>(std::round(start_row + row_inc));
+			int c = static_cast<int>(std::round(start_col + col_inc));
+
+			if (pos_in_bounds(r, c) && m_board[pos_to_index(r, c)] == 'R') {
+				do_damage(50, 60, position_to_robot(r, c));
+			}
+			break;
+		}
+			break;
     }
 
     std::cout << "\tdid not deal damage" << std::endl << std::endl;
